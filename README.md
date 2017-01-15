@@ -1,3 +1,6 @@
+{2017-01-15 SUN 13:25} Cloned from https://github.com/computerlyrik/dymoprint
+
+
 dymoprint
 =========
 
