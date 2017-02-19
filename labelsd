@@ -1,0 +1,12 @@
+#! /bin/sh
+
+[ -z "$1" ] &&  {
+  echo "Usage: $0 <2/3 char label" >&2
+  echo "" >&2
+  echo "Prints a label for SD Card with space to fold and hang" >&2
+  exit 1
+}
+
+cd ~/dymoprint/
+./dymoprint "  ${1}  ${1} "
+  

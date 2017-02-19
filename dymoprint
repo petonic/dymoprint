@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
 
-# === LICENSE STATEMENT ===
+# === LICENSE STATEMENT === v1
 # Copyright (c) 2011 Sebastian J. Bronner <waschtl@sbronner.com>
 #
 # Copying and distribution of this file, with or without modification, are
@@ -33,7 +33,6 @@ FONT_CONFIG = {'regular':'/usr/share/fonts/truetype/ubuntu-font-family/Ubuntu-R.
                'narrow':'/usr/share/fonts/truetype/ubuntu-font-family/Ubuntu-C.ttf'    # narrow/condensed
                }
 FONT_SIZERATIO  = 7./8
-#CONFIG_FILE     = '.dymoprint'
 CONFIG_FILE     = 'dymoprint.ini'
 VERSION         = "0.3.4 (2016-03-14)"
 USE_QR          = True
@@ -41,6 +40,7 @@ USE_QR          = True
 from PIL import Image
 from PIL import ImageDraw
 from PIL import ImageFont
+import PIL.ImageOps
 import array
 import fcntl
 import os
@@ -325,14 +325,15 @@ def main():
         die(access_error(dev))
 
     # read config file
-    conf_path = os.path.dirname(sys.argv[0])
+    # conf_path = os.path.dirname(sys.argv[0])
+    conf_path = "/home/pi/dymoprint"
     read_config(conf_path+'/'+CONFIG_FILE)
 
     # check for any text specified on the command line
     parser = argparse.ArgumentParser(description=DESCRIPTION+' \n Version: '+VERSION)
     parser.add_argument('text',nargs='+',help='Text Parameter, each parameter gives a new line',type=commandline_arg)
     parser.add_argument('-f',action="count",help='Draw frame around the text, more arguments for thicker frame')
-    parser.add_argument('-s',choices=['r','b','i','n'],default='r',help='Set fonst style (regular,bold,italic,narrow)')
+    parser.add_argument('-s',choices=['r','b','i','n'],default='r',help='Set fonts style (regular,bold,italic,narrow)')
     parser.add_argument('-u',nargs='?',help='Set user font, overrides "-s" parameter')
     parser.add_argument('-v',action='store_true',help='Preview label, do not print')
     parser.add_argument('-qr',action='store_true',help='Printing the text parameter as QR-code')
@@ -431,11 +432,21 @@ def main():
 
     # print or show the label
     if args.v == True:
-        print('Demo mode: showing label..')
+        print('Previewing label...')
         # fix size, adding print borders
         labelimage = Image.new('1', (56+labelwidth+56, labelheight))
         labelimage.paste(labelbitmap, (56,0))
-        labelimage.show()
+        ti = labelimage.convert("PNG")
+        print('Image mode is <{}>'.format(ti.mode))
+        inverted_image = PIL.ImageOps.invert(ti)
+        try:
+          with open("preview.jpeg", "w") as file:
+            labelimage.save(file, "JPEG");
+        except IOError as e:
+
+            print >> sys.stderr, "dymoprint: error generating preview:{}".\
+                format(e)
+            labelimage.show()
     else:
         print('Printing label..')
         lm.printLabel(labelmatrix, dottab)
@@ -445,13 +456,8 @@ if __name__ == '__main__':
     main()
 
 
-# TODO
-# ? support multiple ProductIDs (1001, 1002) -> use usb-modeswitch?
+# TODO:
+# >
+# OLD:
 # o put everything in classes that would need to be used by a GUI
-# x for more options use command line parser framework
-# x allow selection of font with command line options
 # o allow font size specification with command line option (points, pixels?)
-# x provide an option to show a preview of what the label will look like
-# x read and write a .dymoprint file containing user preferences
-# o print graphics and barcodes
-# x plot frame around label
