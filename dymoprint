@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # === LICENSE STATEMENT === v1
 # Copyright (c) 2011 Sebastian J. Bronner <waschtl@sbronner.com>
@@ -51,10 +51,10 @@ import sys
 import termios
 import textwrap
 import argparse
-from ConfigParser import SafeConfigParser
+from configparser import SafeConfigParser
 try:
     from pyqrcode import QRCode
-except Exception, e:
+except:
     USE_QR = False
 
 
@@ -183,7 +183,7 @@ class DymoLabeler:
 
         self.statusRequest()
         response = self.sendCommand()
-        print response
+        print (response)
 
     def printLabel(self, lines, dotTab):
         """Print the label described by lines. (HLF)"""
@@ -197,18 +197,18 @@ class DymoLabeler:
         self.skipLines(56)  # add symmetric margin
         self.statusRequest()
         response = self.sendCommand()
-        print response
+        print (response)
 
 
 def die(message=None):
-    if message: print >> sys.stderr, message
+    if message: print (message, file=sys.stderr)
     sys.exit(1)
 
 
 def pprint(par, fd=sys.stdout):
     rows, columns = struct.unpack('HH', fcntl.ioctl(sys.stderr,
         termios.TIOCGWINSZ, struct.pack('HH', 0, 0)))
-    print >> fd, textwrap.fill(par, columns)
+    print(textwrap.fill(par,columns), file=fd)
 
 
 def getDeviceFile(classID, vendorID, productID):
@@ -257,11 +257,13 @@ def access_error(dev):
     pprint('You do not have sufficient access to the device file %s:' % dev,
         sys.stderr)
     subprocess.call(['ls', '-l', dev], stdout=sys.stderr)
-    print >> sys.stderr
-    pprint('You probably want to add a rule in /etc/udev/rules.d along the '
+    print("", file=sys.stderr)
+    pprint('You probably want to add a rule in /etc/udev/rules.d along the ' +
         'following lines:', sys.stderr)
-    print >> sys.stderr, 'SUBSYSTEM=="hidraw", ACTION=="add", ATTRS{idVendor}=="%04X", ATTRS{idProduct}=="%04X", GROUP="plugdev"' % (DEV_VENDOR, DEV_PRODUCT)
-    print >> sys.stderr
+    print ('SUBSYSTEM=="hidraw", ACTION=="add", ATTRS{idVendor}=="%04X", '+
+           'ATTRS{idProduct}=="%04X", GROUP="plugdev"'
+           % (DEV_VENDOR, DEV_PRODUCT), file=sys.stderr)
+    print("", file=sys.stderr)
     pprint('Following that, turn off your device and back on again to '
         'activate the new permissions.', sys.stderr)
 
@@ -305,8 +307,8 @@ def scaling(pix,sc):
 
 ''' decoding text parameter depending on system encoding '''
 def commandline_arg(bytestring):
-    unicode_string = bytestring.decode(sys.getfilesystemencoding())
-    return unicode_string
+    # unicode_string = bytestring.decode(sys.getfilesystemencoding())
+    return bytestring
 
 
 def main():
@@ -352,7 +354,7 @@ def main():
     else:
         FONT_FILENAME = FONT_CONFIG['regular']
 
-    if args.u <> None:
+    if args.u != None:
         if os.path.isfile(args.u):
             FONT_FILENAME = args.u
         else:
@@ -376,7 +378,7 @@ def main():
         labeldraw = ImageDraw.Draw(labelbitmap)
 
         # draw frame into empty image
-        if args.f <> None:
+        if args.f != None:
             labeldraw.rectangle(((0,0),(labelwidth-1,labelheight-1)),fill=255)
             labeldraw.rectangle(((fontoffset,fontoffset),(labelwidth-(fontoffset+1),labelheight-(fontoffset+1))),fill=0)
 
@@ -412,7 +414,7 @@ def main():
     # convert the image to the proper matrix for the dymo labeler object
     labelrotated = labelbitmap.transpose(Image.ROTATE_270)
     labelstream = labelrotated.tobytes()
-    labelstreamrowlength = labelheight/8 + (1 if labelheight%8 != 0 else 0)
+    labelstreamrowlength = int(labelheight/8) + (1 if labelheight%8 != 0 else 0)
     if len(labelstream)/labelstreamrowlength != labelwidth:
         die('An internal problem was encountered while processing the label '
             'bitmap!')
@@ -434,18 +436,19 @@ def main():
     if args.v == True:
         print('Previewing label...')
         # fix size, adding print borders
-        labelimage = Image.new('1', (56+labelwidth+56, labelheight))
+        labelimage = Image.new('L', (56+labelwidth+56, labelheight))
         labelimage.paste(labelbitmap, (56,0))
-        ti = labelimage.convert("PNG")
-        print('Image mode is <{}>'.format(ti.mode))
-        inverted_image = PIL.ImageOps.invert(ti)
+        # import pdb; pdb.set_trace()
+        # ti = labelimage.convert(colors=2)
+        # print('Image mode is <{}>'.format(ti.mode))
+        inverted_image = PIL.ImageOps.invert(labelimage)
         try:
           with open("preview.jpeg", "w") as file:
-            labelimage.save(file, "JPEG");
+            inverted_image.save(file, "JPEG");
         except IOError as e:
 
-            print >> sys.stderr, "dymoprint: error generating preview:{}".\
-                format(e)
+            print("dymoprint: error generating preview:{}".format(e),
+                  file=sys.stderr)
             labelimage.show()
     else:
         print('Printing label..')
@@ -453,7 +456,14 @@ def main():
 
 
 if __name__ == '__main__':
+    from bdb import BdbQuit
+    # try:
     main()
+    # except (BdbQuit):
+    #     sys.exit(1)
+    # except:
+    #     import pdb;
+    #     pdb.xpm()
 
 
 # TODO:

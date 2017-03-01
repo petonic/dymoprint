@@ -56,3 +56,6 @@ coverage.xml
 docs/_build/
 
 .remote-sync.json
+remlib
+preview.ijpeg
+preview.jpeg

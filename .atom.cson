@@ -1,0 +1,6 @@
+#
+# Local Atom configs for this directory.
+#
+"autocomplete-python":
+    extraPaths: "/Users/petonic/git/dymoprint/remlib"
+    pythonPaths: ""
